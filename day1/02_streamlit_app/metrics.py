@@ -10,6 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 try:
     nltk.download('punkt', quiet=True)
     from nltk.translate.bleu_score import sentence_bleu as nltk_sentence_bleu
+    from nltk.translate.meteor_score import meteor_score as nltk_meteor_score
     from nltk.tokenize import word_tokenize as nltk_word_tokenize
     print("NLTK loaded successfully.") # デバッグ用
 except Exception as e:
@@ -17,6 +18,15 @@ except Exception as e:
     def nltk_word_tokenize(text):
         return text.split()
     def nltk_sentence_bleu(references, candidate):
+        # 簡易BLEUスコア（完全一致/部分一致）
+        ref_words = set(references[0])
+        cand_words = set(candidate)
+        common_words = ref_words.intersection(cand_words)
+        precision = len(common_words) / len(cand_words) if cand_words else 0
+        recall = len(common_words) / len(ref_words) if ref_words else 0
+        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        return f1 # F1スコアを返す（簡易的な代替）
+    def nltk_meteor_score(references, candidate):
         # 簡易BLEUスコア（完全一致/部分一致）
         ref_words = set(references[0])
         cand_words = set(candidate)
@@ -61,11 +71,14 @@ def calculate_metrics(answer, correct_answer):
             # ゼロ除算エラーを防ぐ
             if candidate:
                 bleu_score = nltk_sentence_bleu(reference, candidate, weights=(0.25, 0.25, 0.25, 0.25)) # 4-gram BLEU
+                meteor_score = nltk_meteor_score(reference, candidate)
             else:
                 bleu_score = 0.0
+                meteor_score = 0.0
         except Exception as e:
             # st.warning(f"BLEUスコア計算エラー: {e}")
             bleu_score = 0.0 # エラー時は0
+            meteor_score = 0.0 # エラー時は0
 
         # コサイン類似度の計算
         try:
@@ -93,7 +106,7 @@ def calculate_metrics(answer, correct_answer):
             # st.warning(f"関連性スコア計算エラー: {e}")
             relevance_score = 0.0 # エラー時は0
 
-    return bleu_score, similarity_score, word_count, relevance_score
+    return bleu_score, meteor_score, similarity_score, word_count, relevance_score
 
 def get_metrics_descriptions():
     """評価指標の説明を返す"""
@@ -101,6 +114,7 @@ def get_metrics_descriptions():
         "正確性スコア (is_correct)": "回答の正確さを3段階で評価: 1.0 (正確), 0.5 (部分的に正確), 0.0 (不正確)",
         "応答時間 (response_time)": "質問を投げてから回答を得るまでの時間（秒）。モデルの効率性を表す",
         "BLEU スコア (bleu_score)": "機械翻訳評価指標で、正解と回答のn-gramの一致度を測定 (0〜1の値、高いほど類似)",
+        "METEOR スコア (meteor_score)": "機械翻訳評価指標で、正解と回答のn-gramの一致度を測定 (0〜1の値、高いほど類似)",
         "類似度スコア (similarity_score)": "TF-IDFベクトルのコサイン類似度による、正解と回答の意味的な類似性 (0〜1の値)",
         "単語数 (word_count)": "回答に含まれる単語の数。情報量や詳細さの指標",
         "関連性スコア (relevance_score)": "正解と回答の共通単語の割合。トピックの関連性を表す (0〜1の値)",
