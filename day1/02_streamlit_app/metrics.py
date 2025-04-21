@@ -48,11 +48,12 @@ def calculate_metrics(answer, correct_answer):
     """回答と正解から評価指標を計算する"""
     word_count = 0
     bleu_score = 0.0
+    meteor_score = 0.0
     similarity_score = 0.0
     relevance_score = 0.0
 
     if not answer: # 回答がない場合は計算しない
-        return bleu_score, similarity_score, word_count, relevance_score
+        return bleu_score, meteor_score, similarity_score, word_count, relevance_score
 
     # 単語数のカウント
     tokenizer = Tokenizer()
@@ -71,13 +72,23 @@ def calculate_metrics(answer, correct_answer):
             # ゼロ除算エラーを防ぐ
             if candidate:
                 bleu_score = nltk_sentence_bleu(reference, candidate, weights=(0.25, 0.25, 0.25, 0.25)) # 4-gram BLEU
-                meteor_score = nltk_meteor_score(reference, candidate)
             else:
                 bleu_score = 0.0
-                meteor_score = 0.0
         except Exception as e:
             # st.warning(f"BLEUスコア計算エラー: {e}")
             bleu_score = 0.0 # エラー時は0
+
+        # METEOR スコアの計算
+        try:
+            reference = [nltk_word_tokenize(correct_answer_lower)]
+            candidate = nltk_word_tokenize(answer_lower)
+            # ゼロ除算エラーを防ぐ
+            if candidate:
+                meteor_score = nltk_meteor_score(reference, candidate)
+            else:
+                meteor_score = 0.0
+        except Exception as e:
+            # st.warning(f"METEORスコア計算エラー: {e}")
             meteor_score = 0.0 # エラー時は0
 
         # コサイン類似度の計算
