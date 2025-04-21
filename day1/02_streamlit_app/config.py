@@ -1,4 +1,4 @@
 # config.py
 DB_FILE = "chat_feedback.db"
-MODEL_NAME = "microsoft/bitnet-b1.58-2B-4T"
+MODEL_NAME = "google/gemma-3-1b-it"
 # MODEL_NAME = "google/gemma-2-2b-jpn-it"
