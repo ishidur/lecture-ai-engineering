@@ -188,5 +188,6 @@ def test_baseline_comparision(train_model):
     accuracy_base = accuracy_score(y_test, y_pred_base)
 
     # 過去のベースラインモデルよりも精度が向上することを期待する
-    assert accuracy >= accuracy_base, f"ベースラインのモデルよりも精度が悪化しています: {accuracy}, baseline: {accuracy_base}"
-
+    assert (
+        accuracy >= accuracy_base
+    ), f"ベースラインのモデルよりも精度が悪化しています: {accuracy}, baseline: {accuracy_base}"
